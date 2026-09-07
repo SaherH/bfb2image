@@ -160,7 +160,7 @@ mount --bind /dev mnt/dev
 mount --bind /sys mnt/sys
 sed -i -r -e 's/earlycon=[^ ]* //g' mnt/etc/default/grub
 # ubuntu 24.04: disable modeset for virtio_gpu to workaround vblank timeout issue
-echo 'GRUB_CMDLINE_LINUX="$GRUB_CMDLINE_LINUX virtio_gpu.modeset=0"' >> mnt/etc/default/grub
+echo 'GRUB_CMDLINE_LINUX="$GRUB_CMDLINE_LINUX virtio_gpu.modeset=0 biosdevname=0"' >> mnt/etc/default/grub
 mkconfig_outout=$(chroot mnt env PATH=$CHROOT_PATH /usr/sbin/grub-mkconfig -o /boot/grub/grub.cfg 2>&1)
 
 if echo $mkconfig_outout | grep "Command failed" ; then

@@ -177,6 +177,12 @@ perl -ni -e 'print unless /PasswordAuthentication no/' mnt/etc/ssh/sshd_config
 echo "PasswordAuthentication yes" >> mnt/etc/ssh/sshd_config
 echo "PermitRootLogin yes" >> mnt/etc/ssh/sshd_config
 
+root_uuid=$(blkid -p $ROOT_PARTITION | grep -oP ' UUID=[0-9a-zA-Z"-]+' |cut -d '"' -f2)
+boot_uuid=$(blkid -p $BOOT_PARTITION | grep -oP ' UUID=[0-9a-zA-Z"-]+' |cut -d '"' -f2)
+if [ -z "$root_uuid" ] || [ -z "$boot_uuid" ]; then
+    log "ERROR: couldn't read the UUIDs of $ROOT_PARTITION and $BOOT_PARTITION"
+fi
+
 #create boot/grub/grub.cfg
 log "INFO: creating grub.cfg"
 
@@ -192,6 +198,14 @@ if echo $mkconfig_outout | grep "Command failed" ; then
     log "ERROR: grub.cfg was was not created,please check script prerequisites"
 else
     log "INFO: grub.cfg was successfully created"
+fi
+
+# grub-mkconfig falls back to device name (e.g. /dev/mapper/loop0p2)
+# when /dev/disk/by-uuid links doesn't exist, as a result
+# kernel cmdline ends up with root=/dev/mapper/loop0p2
+sed -i -e "s@root=$ROOT_PARTITION\b@root=UUID=$root_uuid@g" mnt/boot/grub/grub.cfg
+if grep -q "/dev/mapper/loop" mnt/boot/grub/grub.cfg || ! grep -q "root=UUID=$root_uuid" mnt/boot/grub/grub.cfg; then
+    log "ERROR: grub.cfg doesn't pass root=UUID=$root_uuid to the kernel"
 fi
 
 # ib_core is omitted so that it is not loaded before switch_root, to ensure the mlnx-sf modprobe hook runs.
@@ -226,8 +240,6 @@ rm -f mnt/etc/systemd/system/multi-user.target.wants/mlx_ipmid.service
 #create EFI/ubuntu/grub.cfg
 root='$root'
 prefix='$prefix'
-root_uuid=$(blkid -p $ROOT_PARTITION | grep -oP ' UUID=[0-9a-zA-Z"-]+' |cut -d '"' -f2)
-boot_uuid=$(blkid -p $BOOT_PARTITION | grep -oP ' UUID=[0-9a-zA-Z"-]+' |cut -d '"' -f2)
 cat >mnt/boot/efi/EFI/ubuntu/grub.cfg << EOF
 search.fs_uuid $root_uuid root
 set prefix=($root)'/boot/grub'

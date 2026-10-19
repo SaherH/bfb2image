@@ -203,10 +203,12 @@ fi
 # grub-mkconfig falls back to device name (e.g. /dev/mapper/loop0p2)
 # when /dev/disk/by-uuid links doesn't exist, as a result
 # kernel cmdline ends up with root=/dev/mapper/loop0p2
+grep root= mnt/boot/grub/grub.cfg
 sed -i -e "s@root=$ROOT_PARTITION\b@root=UUID=$root_uuid@g" mnt/boot/grub/grub.cfg
 if grep -q "/dev/mapper/loop" mnt/boot/grub/grub.cfg || ! grep -q "root=UUID=$root_uuid" mnt/boot/grub/grub.cfg; then
     log "ERROR: grub.cfg doesn't pass root=UUID=$root_uuid to the kernel"
 fi
+grep root= mnt/boot/grub/grub.cfg
 
 # ib_core is omitted so that it is not loaded before switch_root, to ensure the mlnx-sf modprobe hook runs.
 mkdir -p mnt/etc/dracut.conf.d

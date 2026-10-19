@@ -192,8 +192,8 @@ mount --bind /sys mnt/sys
 sed -i -r -e 's/earlycon=[^ ]* //g' mnt/etc/default/grub
 # ubuntu 24.04: disable modeset for virtio_gpu to workaround vblank timeout issue.
 sed -i -r -e 's/^GRUB_CMDLINE_LINUX="(.*)"/GRUB_CMDLINE_LINUX="\1 virtio_gpu.modeset=0"/' mnt/etc/default/grub
-for dev in /dev/disk/by-uuid/*; do if [ "$(realpath $dev)" == "$ROOT_PARTITION" ]; then rm -f $dev; fi; done
-for dev in /dev/disk/by-partuuid/*; do if [ "$(realpath $dev)" == "$ROOT_PARTITION" ]; then rm -f $dev; fi; done
+for dev in /dev/disk/by-uuid/*; do if [ "$(realpath $dev)" == "$(realpath $ROOT_PARTITION)" ]; then rm -vf $dev; fi; done
+for dev in /dev/disk/by-partuuid/*; do if [ "$(realpath $dev)" == "$(realpath $ROOT_PARTITION)" ]; then rm -vf $dev; fi; done
 
 mkconfig_outout=$(chroot mnt env PATH=$CHROOT_PATH /usr/sbin/grub-mkconfig -o /boot/grub/grub.cfg 2>&1)
 
